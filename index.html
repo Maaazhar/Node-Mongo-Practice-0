@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+    <title>MongoDB Practice </title>
+</head>
+
+<body>
+    <h1>MongoDB practice</h1>
+    <form class="container form-control p-2 w-50" action="/addProduct" method="post">
+        <input class="form-control p-1 m-2 w-75" type="text" placeholder="Product Name" name="name">
+        <input class="form-control p-1 m-2 w-75" type="text" placeholder="Product Price" name="price">
+        <input class="form-control p-1 m-2 w-75" type="text" placeholder="Product Quantity" name="quantity">
+        <button class="btn btn-primary form-control p-1 m-2 w-75 " type="submit">ADD PRODUCT</button>
+    </form>
+
+    <div id="products" class="row">
+
+    </div>
+    <div id="update">
+
+    </div>
+
+
+
+    <script>
+        const loadProducts = () => {
+            fetch('/products')
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    const container = document.getElementById('products');
+                    container.innerHTML = '';
+                    data.forEach(pd => {
+                        const item = document.createElement('div');
+                        item.className = 'col-lg-3 col-md-4 col-sm-12';
+                        // console.log(pd.name);
+                        item.innerHTML = `  
+                        <div class="container card rounded shadow bg-primary text-light m-2 p-2 text-center">
+                            <h1 class="card-title"> ${pd.name} </h1> 
+                            <h3 class="card-content"> Price: BDT ${pd.price}</h3>
+                            <h5 class="card-content"> ${pd.quantity} pcs / kg  available in stock </h5>
+                            <button class="btn btn-warning  align-self-center m-1 p-1" onclick="updateHandler('${pd._id}')" >UPDATE ITEM</button>
+                            <button class="btn btn-danger  align-self-center m-1 p-1" onclick="removeHandler(event, '${pd._id}')" >REMOVE ITEM</button>
+                        </div> `;
+                        container.appendChild(item);
+                    });
+                })
+        }
+
+        const updateHandler = (id) => {
+            console.log(id, 'Number product is ready to update');
+            fetch(`product/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    const update = document.getElementById('update');
+                    update.innerHTML = `
+                    <div class="container form-control p-2 w-50">
+                        <h4 class="form-title text-center">Updating: <span class=" text-danger"> ${data.name}</span></h4>
+                        Price: <input class="form-control p-1 m-2 w-75" type="text" value="${data.price}" id="price">
+                        Quantity: <input class="form-control p-1 m-2 w-75" type="text" value="${data.quantity}" id="quantity">
+                        <button class="btn btn-primary form-control p-1 m-1 w-50 " onclick="updateProductHandler('${data._id}')" type="submit">UPDATE PRODUCT</button>
+                    </div>
+                    `;
+                })
+        }
+
+        const updateProductHandler = (id) => {
+            console.log('updating', id);
+            const price = document.getElementById('price').value;
+            const quantity = document.getElementById('quantity').value;
+            const product = { id, quantity, price };
+
+            fetch(`/update/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(product)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    console.log(id, 'Number product has successfully updated');
+                    if (data) {
+                        loadProducts();
+                        document.getElementById('update').innerHTML = '';
+                    }
+                })
+
+        }
+
+        const removeHandler = (event, id) => {
+            console.log(event.target.parentNode);
+            console.log(id, 'Number product is ready to remove');
+            fetch(`/delete/${id}`, {
+                method: 'DELETE'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    console.log(id, 'Number product has successfully deleted');
+                    if (data) {
+                        event.target.parentNode.style.display = 'none';
+                    }
+                })
+        }
+
+
+        loadProducts();
+    </script>
+</body>
+
+</html>
